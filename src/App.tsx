@@ -1,6 +1,4 @@
-import React from 'react';
-import { MainIndex } from './components/MainIndex';
-
+import { MainIndex } from './components/index';
 
 function App() {
 	return (

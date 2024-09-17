@@ -1,5 +1,15 @@
 import styled from "styled-components";
 import TestUserLogo from '../../assets/TestUserLogo.png'
+import { SendTransactionRequest } from "@tonconnect/ui";
+import { beginCell } from '@ton/core';
+import { createHelia } from "helia";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Post, Profile, usePosts, useUser } from "../store/useUsers";
+
+
+const ITEM = "kQCSJwgXtxWbQaLe3LiCnWiLod2FvSxFcIFqJupWbSVopcFQ"
+const API = ""
 
 const Container = styled.div`
     width: 100%;
@@ -126,38 +136,56 @@ const PostDescription = styled.a`
 
 
 export const MainPage = () => {
+    let { address } = useParams()
 
-    const posts = [
-        {
-            title: "Post 1",
-            description: "post 1",
-            postImg: TestUserLogo,
-        },
-        {
-            title: "Post 2",
-            description: "post 2",
-            postImg: TestUserLogo,
-        },
-        {
-            title: "Post 3",
-            description: "post 3",
-            postImg: TestUserLogo,
-        },
-    ]
+    let [ user, setUser ] = useUser()
+    let [ posts, setPosts ] = usePosts()
+
+    useEffect(() => {
+        async function main() {
+
+            type TPost = { address: string, link: string }
+
+            interface Response {
+                ok: string,
+                result: { 
+                    user_profile_link: string,
+                    posts: TPost[] 
+                }
+                err: string
+            }
+
+            let res: Response = await (await fetch(`${API}/api/v1/profile/info?address=${address}`)).json() 
+            if (res.ok == "true") {
+                let profile: Profile = await (await fetch(res.result.user_profile_link)).json() 
+                setUser(profile)
+
+                let temp_posts: Post[] = []
+
+                for (let index = 0; index < res.result.posts.length; index++) {
+                    let post: Post = await (await fetch(res.result.posts[index].link)).json() 
+                    temp_posts.push(post)
+                }
+                setPosts({posts: temp_posts})
+            }
+        }
+
+        main()
+
+    }, [])
+
+    
 
     return (
         <Container>
             <LeftBlock>
                 <UserInfoContrainer>
                     <UserNameBlock>
-                        <UserLogo src={TestUserLogo} />
-                        <UserName>User 1</UserName>
+                        <UserLogo src={user.profile.avatar} />
+                        <UserName>{user.profile.username}</UserName>
                     </UserNameBlock>
                     <UserInfoBlock>
-                        <UserInfo>Age: 20 y.o.</UserInfo>
-                        <UserInfo>Followers: 10</UserInfo>
-                        <UserInfo>Total posts: 3</UserInfo>
-                        <UserInfo>Position: Russia</UserInfo>
+                        <UserInfo>{user.profile.bio}</UserInfo>
                     </UserInfoBlock>
                     <PostButton>Post</PostButton>
                 </UserInfoContrainer>
@@ -165,12 +193,10 @@ export const MainPage = () => {
 
             <RightBlock>
                 <PostsContainer>
-                    {posts.map((post, index) => (
+                    {posts.posts.map((post, index) => (
                         <PostBlock key={index}>
-                            <PostLogo src={post.postImg} />
                             <PostsTextBlock>
-                                <PostTitle>{post.title}</PostTitle>
-                                <PostDescription>{post.description}</PostDescription>
+                                <PostDescription>{post.post.content}</PostDescription>
                             </PostsTextBlock>
                         </PostBlock>
                     ))}

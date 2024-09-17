@@ -1,21 +1,42 @@
 import { createStore } from "./store";
 
-interface User {
-    username: string;
-    photo: string;
-    followers: string;
-    totalPost: number;
-    age: number;
-    position: string;
+type Link = {
+        title: string,
+        url: string,
 }
 
-export const defaultStateUser: User = {
-    username: "",
-    photo: "",
-    followers: "",
-    totalPost: 0,
-    age: 0,
-    position: ""
+export interface Profile {
+    profile: {
+        name: string,
+        username: string,
+        bio: string,
+        avatar: string,
+        links: Link[]
+    }
+}
+
+
+export const defaultStateUser: Profile = {
+    profile: {
+        name: "",
+        username: '',
+        bio: '',
+        avatar: '',
+        links: []
+    }
 };
 
+export interface Post {
+    post: {
+        content: "",
+        timestamp: ""
+    }
+}
+
+export interface Posts {
+    posts: Post[]
+}
+
+
 export const [useUser] = createStore(defaultStateUser);
+export const [usePosts] = createStore(<Posts>{ posts: []});

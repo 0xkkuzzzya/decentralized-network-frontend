@@ -233,7 +233,7 @@ export const MainPage: React.FC = () => {
     }
 
     const CreatePost = (res: { body: string, address: string }) => {
-        let parsed_amount = (0.1 * 10 ** 9)
+        let parsed_amount = (0.15 * 10 ** 9)
         const myTransaction: SendTransactionRequest = {
             validUntil: Math.floor(Date.now() / 1000) + 600,
             messages: [

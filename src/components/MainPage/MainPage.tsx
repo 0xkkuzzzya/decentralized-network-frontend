@@ -3,9 +3,11 @@ import TestUserLogo from '../../assets/TestUserLogo.png'
 import { SendTransactionRequest } from "@tonconnect/ui";
 import { beginCell } from '@ton/core';
 import { createHelia } from "helia";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Post, Profile, usePosts, useUser } from "../store/useUsers";
+import { useNavigate } from 'react-router-dom';
+import { encryptUrl } from '../utils/encryption';
 
 
 const ITEM = "kQCSJwgXtxWbQaLe3LiCnWiLod2FvSxFcIFqJupWbSVopcFQ"
@@ -134,12 +136,21 @@ const PostDescription = styled.a`
     margin-top: 10px;
 `
 
+const InputPost = styled.input`
+    width: 80%;
+    height: 50px;
+    font-size: 15px;
+`
 
-export const MainPage = () => {
+
+export const MainPage: React.FC = () => {
     let { address } = useParams()
 
-    let [ user, setUser ] = useUser()
-    let [ posts, setPosts ] = usePosts()
+    let [user, setUser] = useUser()
+    let [posts, setPosts] = usePosts()
+
+    const originalUrl = "/test"; 
+    const encryptedUrl = encryptUrl(originalUrl);
 
     useEffect(() => {
         async function main() {
@@ -148,25 +159,25 @@ export const MainPage = () => {
 
             interface Response {
                 ok: string,
-                result: { 
+                result: {
                     user_profile_link: string,
-                    posts: TPost[] 
+                    posts: TPost[]
                 }
                 err: string
             }
 
-            let res: Response = await (await fetch(`${API}/api/v1/profile/info?address=${address}`)).json() 
+            let res: Response = await (await fetch(`${API}/api/v1/profile/info?address=${address}`)).json()
             if (res.ok == "true") {
-                let profile: Profile = await (await fetch(res.result.user_profile_link)).json() 
+                let profile: Profile = await (await fetch(res.result.user_profile_link)).json()
                 setUser(profile)
 
                 let temp_posts: Post[] = []
 
                 for (let index = 0; index < res.result.posts.length; index++) {
-                    let post: Post = await (await fetch(res.result.posts[index].link)).json() 
+                    let post: Post = await (await fetch(res.result.posts[index].link)).json()
                     temp_posts.push(post)
                 }
-                setPosts({posts: temp_posts})
+                setPosts({ posts: temp_posts })
             }
         }
 
@@ -174,7 +185,7 @@ export const MainPage = () => {
 
     }, [])
 
-    
+
 
     return (
         <Container>
@@ -187,7 +198,11 @@ export const MainPage = () => {
                     <UserInfoBlock>
                         <UserInfo>{user.profile.bio}</UserInfo>
                     </UserInfoBlock>
+                    <InputPost />
                     <PostButton>Post</PostButton>
+                    <Link to={`/test?url=${encodeURIComponent(encryptedUrl)}`}>
+                        Перейти на целевую страницу
+                    </Link>
                 </UserInfoContrainer>
             </LeftBlock>
 

@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
 
-const secretKey = 'your-secret-key'; // Замените на свой секретный ключ
+const crypto = require('crypto');
+const secretKey = crypto.randomBytes(32).toString('hex'); //secret key
 
 export const encryptUrl = (url: string): string => {
     return CryptoJS.AES.encrypt(url, secretKey).toString();

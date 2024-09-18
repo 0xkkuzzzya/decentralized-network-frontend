@@ -1,7 +1,12 @@
 import CryptoJS from 'crypto-js';
 
-const crypto = require('crypto');
-const secretKey = crypto.randomBytes(32).toString('hex'); //secret key
+export const generateRandomKey = (length: number): string => {
+    const array = new Uint8Array(length);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+};
+
+const secretKey = generateRandomKey(32); 
 
 export const encryptUrl = (url: string): string => {
     return CryptoJS.AES.encrypt(url, secretKey).toString();

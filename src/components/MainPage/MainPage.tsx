@@ -136,9 +136,9 @@ const PostDescription = styled.a`
     margin-top: 10px;
 `
 
-const InputPost = styled.input`
+const InputPost = styled.textarea`
     width: 80%;
-    height: 50px;
+    height: 100px;
     font-size: 15px;
 `
 
@@ -200,7 +200,7 @@ export const MainPage: React.FC = () => {
                     </UserInfoBlock>
                     <InputPost />
                     <PostButton>Post</PostButton>
-                    <Link to={`/test?url=${encodeURIComponent(encryptedUrl)}`}>
+                    <Link to={`/test?url${encodeURIComponent(encryptedUrl)}`}>
                         Перейти на целевую страницу
                     </Link>
                 </UserInfoContrainer>

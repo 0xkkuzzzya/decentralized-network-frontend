@@ -23,6 +23,8 @@ export const MainIndex = () => {
         const queryParams = new URLSearchParams(location.search);
         const encryptedUrl = queryParams.get('url');
         const decryptedUrl = encryptedUrl ? decryptUrl(encryptedUrl) : '';
+        
+        console.log(decryptedUrl)
 
         return (
                 <Container>

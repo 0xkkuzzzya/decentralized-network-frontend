@@ -296,7 +296,11 @@ export const MainPage: React.FC = () => {
                     {posts.posts.map((post, index) => (
                         <PostBlock key={index}>
                             <PostsTextBlock>
-                                <PostDescription>{post.address == Address.parse(userFriendlyAddress).toString() ? "Owner" : post.address}</PostDescription>
+                                <PostDescription>{ 
+                                    //userFriendlyAddress === undefined ? post.address :
+                                    //post.address == Address.parse(userFriendlyAddress).toString() ? "Owner" : post.address
+                                    post.address
+                                }</PostDescription>
                                 <PostDescription>{post.post.content}</PostDescription>
                             </PostsTextBlock>
                         </PostBlock>

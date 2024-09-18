@@ -219,12 +219,13 @@ export const MainPage: React.FC = () => {
             ok: string,
             result: {
                 payload: string,
-                jw: string
+                jw: string,
+                item_address: string,
             }
             err: string
         }
         
-        let result: Response = await (await fetch(API + `/api/v1/msg/create_post_not_owner?link=${encodeURIComponent(link)}&address=${userFriendlyAddress}`)).json()
+        let result: Response = await (await fetch(API + `/api/v1/msg/create_post_not_owner?link=${encodeURIComponent(link)}&address=${userFriendlyAddress}&item=${address}`)).json()
 
         if (result.ok == "true") {
             return { body: result.result.payload, address: result.result.jw }

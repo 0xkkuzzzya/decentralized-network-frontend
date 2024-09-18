@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { decryptUrl } from './utils/encryption';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { MainPage } from './MainPage/MainPage';
-import { TestPage } from "./MainPage/TestPage";
+import { Header } from "./Header";
 
 const Container = styled.div`
         width: 1000px;
@@ -23,14 +23,13 @@ export const MainIndex = () => {
         const queryParams = new URLSearchParams(location.search);
         const encryptedUrl = queryParams.get('url');
         const decryptedUrl = encryptedUrl ? decryptUrl(encryptedUrl) : '';
-        
-        console.log(decryptedUrl)
+
 
         return (
                 <Container>
+                        <Header />
                         <Routes>
-                                <Route path="/" element={<MainPage />} />
-                                <Route path="/test" element={<TestPage />} />
+                                <Route path="/:address" element={<MainPage />} />
                         </Routes>
                 </Container>
         )

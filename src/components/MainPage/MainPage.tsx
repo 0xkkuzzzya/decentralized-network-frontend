@@ -8,10 +8,9 @@ import { useEffect, useState } from "react";
 import { Post, Profile, usePosts, useUser } from "../store/useUsers";
 import { useNavigate } from 'react-router-dom';
 import { encryptUrl } from '../utils/encryption';
+import { useTonConnectUI } from "@tonconnect/ui-react";
 
-
-const ITEM = "kQCSJwgXtxWbQaLe3LiCnWiLod2FvSxFcIFqJupWbSVopcFQ"
-const API = ""
+const API = "https://w-api-five.vercel.app"
 
 const Container = styled.div`
     width: 100%;
@@ -145,9 +144,11 @@ const InputPost = styled.textarea`
 
 export const MainPage: React.FC = () => {
     let { address } = useParams()
+    const[value, setValue] = useState(""); 
 
     let [user, setUser] = useUser()
     let [posts, setPosts] = usePosts()
+    const [tonConnectUI, setOptions] = useTonConnectUI();
 
     const originalUrl = "/test"; 
     const encryptedUrl = encryptUrl(originalUrl);
@@ -185,7 +186,50 @@ export const MainPage: React.FC = () => {
 
     }, [])
 
+    const GetCreatePost = async (link: string) => {
+        interface Response {
+            ok: string,
+            result: {
+                payload: string,
+                address: string
+            }
+            err: string
+        }
 
+        let result: Response = await (await fetch(API + `/api/v1/msg/create_post?link=${link}`)).json()
+        if (result.ok == "true") {
+            return { body: result.result.payload, address: result.result.address }
+        }
+        return { body: "", address: "" }
+    }
+
+    const CreatePost = (res: { body: string, address: string }) => {
+        let parsed_amount = (0.1 * 10 ** 9)
+        const myTransaction: SendTransactionRequest = {
+            validUntil: Math.floor(Date.now() / 1000) + 600,
+            messages: [
+                {
+                    address: res.address,
+                    amount: parsed_amount.toString(),
+                    payload: res.body
+                }
+            ]
+        }
+        return myTransaction
+    }
+
+    const CreatePostAction = async (text: string) => {
+        let link = {
+            post: {
+                content: text,
+                timestamp: new Date().toDateString()
+            }
+        }
+
+        let res = await GetCreatePost(JSON.stringify(link))
+        let tx = CreatePost(res)
+        tonConnectUI.sendTransaction(tx);
+    }
 
     return (
         <Container>
@@ -198,11 +242,12 @@ export const MainPage: React.FC = () => {
                     <UserInfoBlock>
                         <UserInfo>{user.profile.bio}</UserInfo>
                     </UserInfoBlock>
-                    <InputPost />
-                    <PostButton>Post</PostButton>
-                    <Link to={`/test?url${encodeURIComponent(encryptedUrl)}`}>
-                        Перейти на целевую страницу
-                    </Link>
+                    <InputPost onChange={(e) => {setValue(e.target.value)}} />
+                    <PostButton onClick={() => {
+                        if (value != "") {
+                            CreatePostAction(value)
+                        }
+                    }}>Post</PostButton>
                 </UserInfoContrainer>
             </LeftBlock>
 

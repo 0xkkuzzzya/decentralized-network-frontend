@@ -28,15 +28,23 @@ export const defaultStateUser: Profile = {
 
 export interface Post {
     post: {
-        content: "",
-        timestamp: ""
+        content: string
+        timestamp: string
     }
 }
 
-export interface Posts {
-    posts: Post[]
+export interface FullPost {
+    address: string,
+    post: {
+        content: string,
+        timestamp: string
+    }
+}
+
+export interface FullPosts {
+    posts: FullPost[]
 }
 
 
 export const [useUser] = createStore(defaultStateUser);
-export const [usePosts] = createStore(<Posts>{ posts: []});
+export const [usePosts] = createStore(<FullPosts>{ posts: []});

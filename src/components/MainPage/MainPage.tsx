@@ -1,17 +1,17 @@
 import styled from "styled-components";
 import TestUserLogo from '../../assets/TestUserLogo.png'
 import { SendTransactionRequest } from "@tonconnect/ui";
-import { beginCell } from '@ton/core';
+import { Address, beginCell } from '@ton/core';
 import { createHelia } from "helia";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Post, Profile, usePosts, useUser } from "../store/useUsers";
+import { FullPost, Post, Profile, usePosts, useUser } from "../store/useUsers";
 import { useNavigate } from 'react-router-dom';
 import { encryptUrl } from '../utils/encryption';
+import { useTonAddress, useTonConnectUI } from "@tonconnect/ui-react";
 
 
-const ITEM = "kQCSJwgXtxWbQaLe3LiCnWiLod2FvSxFcIFqJupWbSVopcFQ"
-const API = ""
+const API = "https://w-api-five.vercel.app"
 
 const Container = styled.div`
     width: 100%;
@@ -145,12 +145,12 @@ const InputPost = styled.textarea`
 
 export const MainPage: React.FC = () => {
     let { address } = useParams()
+    const[value, setValue] = useState(""); 
 
     let [user, setUser] = useUser()
     let [posts, setPosts] = usePosts()
-
-    const originalUrl = "/test"; 
-    const encryptedUrl = encryptUrl(originalUrl);
+    const [tonConnectUI, setOptions] = useTonConnectUI();
+    const userFriendlyAddress = useTonAddress();
 
     useEffect(() => {
         async function main() {
@@ -171,12 +171,23 @@ export const MainPage: React.FC = () => {
                 let profile: Profile = await (await fetch(res.result.user_profile_link)).json()
                 setUser(profile)
 
-                let temp_posts: Post[] = []
+                let temp_posts: FullPost[] = []
 
                 for (let index = 0; index < res.result.posts.length; index++) {
-                    let post: Post = await (await fetch(res.result.posts[index].link)).json()
-                    temp_posts.push(post)
+                    try {
+                        let post: Post = JSON.parse((((res.result.posts[index].link).replace(/\\/g, "")).toString()).slice(1))
+                        temp_posts.push({
+                            address: res.result.posts[index].address,
+                            post: {
+                                content: post.post.content,
+                                timestamp: post.post.timestamp
+                            }
+                        })
+                    } catch (e) {
+                        console.error(e)
+                    }
                 }
+
                 setPosts({ posts: temp_posts })
             }
         }
@@ -185,7 +196,81 @@ export const MainPage: React.FC = () => {
 
     }, [])
 
+    const GetCreatePost = async (link: string) => {
+        interface Response {
+            ok: string,
+            result: {
+                payload: string,
+                address: string
+            }
+            err: string
+        }
+        
+        let result: Response = await (await fetch(API + `/api/v1/msg/create_post?link=${encodeURIComponent(link)}&address=${userFriendlyAddress}`)).json()
 
+        if (result.ok == "true") {
+            return { body: result.result.payload, address: result.result.address }
+        }
+        return { body: "", address: "" }
+    }
+
+    const GetCreatePostNotOwner = async (link: string) => {
+        interface Response {
+            ok: string,
+            result: {
+                payload: string,
+                jw: string,
+                item_address: string,
+            }
+            err: string
+        }
+        
+        let result: Response = await (await fetch(API + `/api/v1/msg/create_post_not_owner?link=${encodeURIComponent(link)}&address=${userFriendlyAddress}&item=${address}`)).json()
+
+        if (result.ok == "true") {
+            return { body: result.result.payload, address: result.result.jw }
+        }
+        return { body: "", address: "" }
+    }
+
+    const CreatePost = (res: { body: string, address: string }) => {
+        let parsed_amount = (0.15 * 10 ** 9)
+        const myTransaction: SendTransactionRequest = {
+            validUntil: Math.floor(Date.now() / 1000) + 600,
+            messages: [
+                {
+                    address: res.address,
+                    amount: parsed_amount.toString(),
+                    payload: res.body
+                }
+            ]
+        }
+        return myTransaction
+    }
+
+    const CreatePostAction = async (text: string) => {
+        let link = {
+            post: {
+                content: text,
+                timestamp: new Date().toDateString()
+            }
+        }
+        console.log(link)
+
+        let res = {
+            body: "",
+            address: ""
+        }
+
+        if (address == userFriendlyAddress) {
+            res = await GetCreatePost(JSON.stringify(link))
+        } else {
+            res = await GetCreatePostNotOwner(JSON.stringify(link))
+        }
+
+        let tx = CreatePost(res)
+        tonConnectUI.sendTransaction(tx);
+    }
 
     return (
         <Container>
@@ -198,11 +283,12 @@ export const MainPage: React.FC = () => {
                     <UserInfoBlock>
                         <UserInfo>{user.profile.bio}</UserInfo>
                     </UserInfoBlock>
-                    <InputPost />
-                    <PostButton>Post</PostButton>
-                    <Link to={`/test?url${encodeURIComponent(encryptedUrl)}`}>
-                        Перейти на целевую страницу
-                    </Link>
+                    <InputPost onChange={(e) => {setValue(e.target.value)}} />
+                    <PostButton onClick={() => {
+                        if (value != "") {
+                            CreatePostAction(value)
+                        }
+                    }}>Post</PostButton>
                 </UserInfoContrainer>
             </LeftBlock>
 
@@ -211,6 +297,11 @@ export const MainPage: React.FC = () => {
                     {posts.posts.map((post, index) => (
                         <PostBlock key={index}>
                             <PostsTextBlock>
+                                <PostDescription>{ 
+                                    //userFriendlyAddress === undefined ? post.address :
+                                    //post.address == Address.parse(userFriendlyAddress).toString() ? "Owner" : post.address
+                                    post.address
+                                }</PostDescription>
                                 <PostDescription>{post.post.content}</PostDescription>
                             </PostsTextBlock>
                         </PostBlock>
